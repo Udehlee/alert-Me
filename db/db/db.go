@@ -1,0 +1,60 @@
+package db
+
+import (
+	"database/sql"
+	"fmt"
+	"log"
+	"os"
+	"strconv"
+)
+
+type DBConfig struct {
+	Username string
+	Password string
+	Host     string
+	Port     int
+	DbName   string
+}
+
+type Conn struct {
+	DB *sql.DB
+}
+
+func LoadDBEnv() (DBConfig, error) {
+	cfg := DBConfig{}
+	port, err := strconv.Atoi(os.Getenv("POSTGRES_PORT"))
+	if err != nil {
+		return cfg, err
+	}
+
+	cfg = DBConfig{
+		Host:     os.Getenv("POSTGRES_HOST"),
+		Port:     port,
+		Username: os.Getenv("POSTGRES_USER"),
+		Password: os.Getenv("POSTGRES_PASSWORD"),
+		DbName:   os.Getenv("POSTGRES_DB"),
+	}
+
+	return cfg, nil
+}
+
+func InitConnectDB() (Conn, error) {
+	db := Conn{}
+	config, err := LoadDBEnv()
+	if err != nil {
+		return db, err
+	}
+
+	dsn := fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s sslmode=disable",
+		config.Username, config.Password, config.Host, config.Port, config.DbName)
+
+	conn, err := sql.Open("postgres", dsn)
+	if err != nil {
+		return db, fmt.Errorf("error creating database connection: %w", err)
+	}
+
+	db.DB = conn
+
+	log.Println("Database connected successfully")
+	return db, nil
+}
