@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/Udehlee/alert-Me/models"
 )
 
 type DBConfig struct {
@@ -57,4 +59,34 @@ func InitConnectDB() (Conn, error) {
 
 	log.Println("Database connected successfully")
 	return db, nil
+}
+
+// Save saves user details to db
+func (c Conn) Save(user models.User) error {
+	query := `INSERT INTO users (email, pass_word)
+	          VALUES ($1, $2, $3, $4)
+	          RETURNING user_id, email,created_at
+             `
+	row := c.DB.QueryRow(query, user.Email, user.Password, &user.CreatedAt)
+	if err := row.Scan(&user.ID, &user.Email, &user.CreatedAt); err != nil {
+		return fmt.Errorf("error scanning row: %w", err)
+	}
+
+	return nil
+}
+
+// SelectedProduct saves products selected by user
+func (c Conn) SelectedProduct(product models.SelectedProduct) error {
+	query := `INSERT INTO SelectedProduct(user_id, product_id, product_name, price)
+	          VALUES ($1, $2, $3, $4)
+	          RETURNING id, user_id, product_id, product_name, price, created_at
+             `
+
+	row := c.DB.QueryRow(query, product.UserID, product.ProductID, product.ProductName, product.CurrentPrice)
+	err := row.Scan(&product.ID, &product.UserID, &product.ProductID, &product.ProductName, &product.CurrentPrice, &product.CreatedAt)
+	if err != nil {
+		return fmt.Errorf("error scanning row: %w", err)
+	}
+
+	return nil
 }
