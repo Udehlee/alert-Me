@@ -30,10 +30,10 @@ func LoadDBEnv() (DBConfig, error) {
 	}
 
 	cfg = DBConfig{
-		Host:     os.Getenv("POSTGRES_HOST"),
-		Port:     port,
 		Username: os.Getenv("POSTGRES_USER"),
 		Password: os.Getenv("POSTGRES_PASSWORD"),
+		Host:     os.Getenv("POSTGRES_HOST"),
+		Port:     port,
 		DbName:   os.Getenv("POSTGRES_DB"),
 	}
 
