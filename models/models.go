@@ -14,6 +14,19 @@ type SelectedProduct struct {
 	UserID       string    `json:"user_id"`
 	ProductID    string    `json:"product_id"`
 	ProductName  string    `json:"product_name"`
-	CurrentPrice float64   `json:"current_price"`
+	CurrentPrice string    `json:"current_price"`
 	CreatedAt    time.Time `json:"created_at"`
+}
+
+type Product struct {
+	ItemID string `json:"itemId"`
+	Title  string `json:"title"`
+	Price  struct {
+		Value    string `json:"value"`
+		Currency string `json:"currency"`
+	} `json:"price"`
+}
+
+type SearchResponse struct {
+	Products []Product `json:"products"`
 }
