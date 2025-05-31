@@ -6,10 +6,12 @@ import (
 	"github.com/Udehlee/alert-Me/api"
 	"github.com/Udehlee/alert-Me/client"
 	"github.com/Udehlee/alert-Me/db/db"
+	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 )
 
 func main() {
+	r := gin.Default()
 	log := zerolog.New(os.Stderr).With().Timestamp().Caller().Logger()
 	Client := client.NewEbayClient(os.Getenv("ACCESS_TOKEN"))
 
@@ -20,4 +22,6 @@ func main() {
 	}
 
 	h := api.NewHandler(db, Client, log)
+	h.RegisterRoutes(r)
+
 }
