@@ -1,9 +1,8 @@
   CREATE TABLE selectedProducts (
-    id UUID SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
-    product_id TEXT NOT NULL,
-    product_name TEXT NOT NULL,
-    current_price DOUBLE PRECISION NOT NULL,
+    id INT SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    price DOUBLE PRECISION NOT NULL,
+    product_url TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
-    CONSTRAINT FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    last_checked TIMESTAMP DEFAULT NOW()
     );

@@ -10,23 +10,10 @@ type User struct {
 }
 
 type SelectedProduct struct {
-	ID           string    `json:"id"`
-	UserID       string    `json:"user_id"`
-	ProductID    string    `json:"product_id"`
-	ProductName  string    `json:"product_name"`
-	CurrentPrice string    `json:"current_price"`
-	CreatedAt    time.Time `json:"created_at"`
-}
-
-type Product struct {
-	ItemID string `json:"itemId"`
-	Title  string `json:"title"`
-	Price  struct {
-		Value    string `json:"value"`
-		Currency string `json:"currency"`
-	} `json:"price"`
-}
-
-type SearchResponse struct {
-	Products []Product `json:"products"`
+	ID          int       `json:"id"`
+	Title       string    `json:"title"`
+	Price       string    `json:"price"`
+	URL         string    `json:"url"`
+	CreatedAt   time.Time `json:"created_at"`
+	LastChecked time.Time `json:"last_checked"`
 }
