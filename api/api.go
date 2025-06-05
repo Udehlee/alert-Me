@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Udehlee/alert-Me/db/db"
+	"github.com/Udehlee/alert-Me/models"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 )
@@ -27,10 +28,16 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 
 }
 
-// func (h *Handler) SubmitProduct(c *gin.Context) {
-// 	var reqProduct models.SelectedProduct
+func (h *Handler) SubmitProduct(c *gin.Context) {
+	var reqProduct models.UrlRequest
 
-// }
+	err := c.ShouldBindJSON(&reqProduct)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to bind URL request"})
+		return
+	}
+
+}
 
 func (h *Handler) Signup(c *gin.Context) {
 	c.JSON(http.StatusInternalServerError, gin.H{"error": "unimplemented"})
