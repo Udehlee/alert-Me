@@ -13,7 +13,11 @@ type SelectedProduct struct {
 	ID          int       `json:"id"`
 	Title       string    `json:"title"`
 	Price       string    `json:"price"`
-	URL         string    `json:"url"`
+	URL         string    `json:"product_url"`
 	CreatedAt   time.Time `json:"created_at"`
 	LastChecked time.Time `json:"last_checked"`
+}
+
+type UrlRequest struct {
+	URL string `json:"product_url"`
 }
