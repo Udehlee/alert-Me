@@ -75,8 +75,8 @@ func (c Conn) Save(user models.User) error {
 	return nil
 }
 
-// SelectedProduct saves products selected by user to watch
-func (c Conn) SelectedProduct(product models.SelectedProduct) error {
+// SaveProduct saves products selected by user to watch
+func (c Conn) SaveProduct(product models.SelectedProduct) error {
 	query := `INSERT INTO SelectedProduct(title,price,product_url)
 	          VALUES ($1, $2, $3)
 	          RETURNING id, title, price,product_url, created_at, last_checked
