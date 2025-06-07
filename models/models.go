@@ -19,5 +19,5 @@ type SelectedProduct struct {
 }
 
 type UrlRequest struct {
-	URL string `json:"product_url"`
+	URL string `json:"url"`
 }
