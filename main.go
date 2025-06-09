@@ -20,14 +20,16 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to connect to database")
 	}
 
-	rb, err := rabbitMQ.ConnectRabbitMQ(dbConn)
+	rbConn, err := rabbitMQ.ConnectRabbitMQ()
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to RabbitMQ")
 	}
 
-	go rb.Consumer("product-url", utils.ScrapeProduct)
+	rb := rabbitMQ.NewRabbitMQ(rbConn.Conn, rbConn.Ch, dbConn)
 
-	h := api.NewHandler(log, &rb)
+	go rb.Consumer("product-url", utils.ExtractProduct)
+
+	h := api.NewHandler(log, &rbConn)
 	h.RegisterRoutes(r)
 
 	if err := r.Run(":8000"); err != nil {
