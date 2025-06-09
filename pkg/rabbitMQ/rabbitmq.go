@@ -26,8 +26,8 @@ func NewRabbitMQ(conn *amqp.Connection, ch *amqp.Channel, db db.Conn) *RabbitMQ 
 }
 
 // ConnectRabbitMQ initializes the connection and channel
-func ConnectRabbitMQ(db db.Conn) (RabbitMQ, error) {
-	rb := RabbitMQ{db: db}
+func ConnectRabbitMQ() (RabbitMQ, error) {
+	rb := RabbitMQ{}
 
 	conn, err := amqp.Dial(os.Getenv("RABBITMQ_URL"))
 	if err != nil {
@@ -57,7 +57,7 @@ func (r *RabbitMQ) PublishToQueue(queueName string, body []byte) error {
 		nil,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to publish message: %v", err)
+		return fmt.Errorf("failed to declare message: %v", err)
 
 	}
 
@@ -81,7 +81,7 @@ func (r *RabbitMQ) PublishToQueue(queueName string, body []byte) error {
 
 // Consumer listens and  processes incoming messages from queue
 // It scrapes product data from URLs and saves them to the database
-func (r *RabbitMQ) Consumer(queueName string, scraper func(string) models.SelectedProduct) {
+func (r *RabbitMQ) Consumer(queueName string, scraper func(string) (models.SelectedProduct, error)) {
 	msgs, err := r.Ch.Consume(
 		queueName,
 		"",
@@ -104,10 +104,13 @@ func (r *RabbitMQ) Consumer(queueName string, scraper func(string) models.Select
 				continue
 			}
 
-			product := scraper(payload.URL)
+			product, err := scraper(payload.URL)
+			if err != nil {
+				log.Printf("Failed to scrape product url: %v", err)
+			}
 
 			if err := r.db.SaveProduct(product); err != nil {
-				log.Printf("Failed to save productto db: %v", err)
+				log.Printf("Failed to save product to db: %v", err)
 				continue
 			}
 
