@@ -11,7 +11,7 @@ type User struct {
 
 type SelectedProduct struct {
 	ID          int       `json:"id"`
-	Title       string    `json:"title"`
+	Name        string    `json:"name_"`
 	Price       string    `json:"price"`
 	URL         string    `json:"product_url"`
 	CreatedAt   time.Time `json:"created_at"`

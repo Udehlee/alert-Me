@@ -77,13 +77,13 @@ func (c Conn) Save(user models.User) error {
 
 // SaveProduct saves products selected by user to watch
 func (c Conn) SaveProduct(product models.SelectedProduct) error {
-	query := `INSERT INTO SelectedProduct(title,price,product_url)
+	query := `INSERT INTO SelectedProduct(name_,price,product_url)
 	          VALUES ($1, $2, $3)
 	          RETURNING id, title, price,product_url, created_at, last_checked
              `
 
-	row := c.DB.QueryRow(query, product.ID, product.Title, product.Price, product.URL)
-	err := row.Scan(&product.ID, &product.Title, &product.Price, &product.URL, &product.CreatedAt, &product.LastChecked)
+	row := c.DB.QueryRow(query, product.ID, product.Name, product.Price, product.URL)
+	err := row.Scan(&product.ID, &product.Name, &product.Price, &product.URL, &product.CreatedAt, &product.LastChecked)
 	if err != nil {
 		return fmt.Errorf("error scanning row: %w", err)
 	}
