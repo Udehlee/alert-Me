@@ -1,0 +1,89 @@
+package utils
+
+import (
+	"fmt"
+	"log"
+	"net/url"
+	"strings"
+
+	"github.com/Udehlee/alert-Me/models"
+	"github.com/gocolly/colly"
+)
+
+// it is assumed that you enter a selected product url, so
+// scrapers maps domain names to their specific functions
+// and scrape the selected product’s name and price from its URL
+var scrapers = map[string]func(url string) (string, string, error){
+	"jumia.com.ng": func(url string) (string, string, error) {
+		var name, price string
+		c := colly.NewCollector(
+			colly.AllowedDomains("www.jumia.com.ng", "jumia.com.ng"),
+		)
+
+		c.OnHTML("h1.-fs20.-pts.-pbxs", func(e *colly.HTMLElement) {
+			name = strings.TrimSpace(e.Text)
+		})
+
+		c.OnHTML("span.-b.-ltr.-tal.-fs24", func(e *colly.HTMLElement) {
+			price = strings.TrimSpace(e.Text)
+		})
+
+		c.OnError(func(r *colly.Response, err error) {
+			log.Printf("Error scraping jumia: %v, URL: %s", err, r.Request.URL)
+		})
+
+		c.Visit(url)
+		return name, price, nil
+	},
+
+	"konga.com": func(url string) (string, string, error) {
+		var name, price string
+		c := colly.NewCollector(
+			colly.AllowedDomains("www.konga.com", "konga.com"),
+		)
+
+		c.OnHTML("h1.product-name", func(e *colly.HTMLElement) {
+			name = strings.TrimSpace(e.Text)
+		})
+
+		c.OnHTML("span.price", func(e *colly.HTMLElement) {
+			price = strings.TrimSpace(e.Text)
+		})
+
+		c.OnError(func(r *colly.Response, err error) {
+			log.Printf("Error scraping konga: %v, URL: %s", err, r.Request.URL)
+		})
+
+		c.Visit(url)
+		return name, price, nil
+	},
+}
+
+// ExtractProduct gets a product's name and price from its URL
+// using the associated scraper based on its domain
+func ExtractProduct(Url string) (models.SelectedProduct, error) {
+	product := models.SelectedProduct{}
+
+	u, err := url.Parse(Url)
+	if err != nil {
+		return product, fmt.Errorf("invalid url: %w", err)
+	}
+	domain := u.Hostname()
+
+	for k, scraper := range scrapers {
+		if strings.Contains(domain, k) {
+			name, price, err := scraper(Url)
+			if err != nil {
+				return product, err
+			}
+
+			product.Name = name
+			product.Price = price
+
+			return product, nil
+		}
+	}
+
+	//if there is no match
+	return product, fmt.Errorf("no scraper found for domain: %s", domain)
+}
