@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/Udehlee/alert-Me/models"
@@ -13,51 +14,56 @@ import (
 // it is assumed that you enter a selected product url, so
 // scrapers maps domain names to their specific functions
 // and scrape the selected product’s name and price from its URL
-var scrapers = map[string]func(url string) (string, string, error){
-	"jumia.com.ng": func(url string) (string, string, error) {
-		var name, price string
-		c := colly.NewCollector(
-			colly.AllowedDomains("www.jumia.com.ng", "jumia.com.ng"),
-		)
+var (
+	nameTag  = os.Getenv("NAME_SELECTOR")
+	priceTag = os.Getenv("PRICE_SELECTOR")
 
-		c.OnHTML("h1.-fs20.-pts.-pbxs", func(e *colly.HTMLElement) {
-			name = strings.TrimSpace(e.Text)
-		})
+	scrapers = map[string]func(url string) (string, string, error){
+		"jumia.com.ng": func(url string) (string, string, error) {
+			var name, price string
+			c := colly.NewCollector(
+				colly.AllowedDomains("www.jumia.com.ng", "jumia.com.ng"),
+			)
 
-		c.OnHTML("span.-b.-ltr.-tal.-fs24", func(e *colly.HTMLElement) {
-			price = strings.TrimSpace(e.Text)
-		})
+			c.OnHTML(nameTag, func(e *colly.HTMLElement) {
+				name = strings.TrimSpace(e.Text)
+			})
 
-		c.OnError(func(r *colly.Response, err error) {
-			log.Printf("Error scraping jumia: %v, URL: %s", err, r.Request.URL)
-		})
+			c.OnHTML(priceTag, func(e *colly.HTMLElement) {
+				price = strings.TrimSpace(e.Text)
+			})
 
-		c.Visit(url)
-		return name, price, nil
-	},
+			c.OnError(func(r *colly.Response, err error) {
+				log.Printf("Error scraping jumia: %v, URL: %s", err, r.Request.URL)
+			})
 
-	"konga.com": func(url string) (string, string, error) {
-		var name, price string
-		c := colly.NewCollector(
-			colly.AllowedDomains("www.konga.com", "konga.com"),
-		)
+			c.Visit(url)
+			return name, price, nil
+		},
 
-		c.OnHTML("h1.product-name", func(e *colly.HTMLElement) {
-			name = strings.TrimSpace(e.Text)
-		})
+		"konga.com": func(url string) (string, string, error) {
+			var name, price string
+			c := colly.NewCollector(
+				colly.AllowedDomains("www.konga.com", "konga.com"),
+			)
 
-		c.OnHTML("span.price", func(e *colly.HTMLElement) {
-			price = strings.TrimSpace(e.Text)
-		})
+			c.OnHTML(nameTag, func(e *colly.HTMLElement) {
+				name = strings.TrimSpace(e.Text)
+			})
 
-		c.OnError(func(r *colly.Response, err error) {
-			log.Printf("Error scraping konga: %v, URL: %s", err, r.Request.URL)
-		})
+			c.OnHTML(priceTag, func(e *colly.HTMLElement) {
+				price = strings.TrimSpace(e.Text)
+			})
 
-		c.Visit(url)
-		return name, price, nil
-	},
-}
+			c.OnError(func(r *colly.Response, err error) {
+				log.Printf("Error scraping konga: %v, URL: %s", err, r.Request.URL)
+			})
+
+			c.Visit(url)
+			return name, price, nil
+		},
+	}
+)
 
 // ExtractProduct gets a product's name and price from its URL
 // using the associated scraper based on its domain
