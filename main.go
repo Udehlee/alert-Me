@@ -1,12 +1,13 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/Udehlee/alert-Me/api"
 	"github.com/Udehlee/alert-Me/db/db"
-	"github.com/Udehlee/alert-Me/pkg/rabbitMQ"
-	"github.com/Udehlee/alert-Me/pkg/utils"
+	"github.com/Udehlee/alert-Me/pkg/rabbitmq"
+	"github.com/Udehlee/alert-Me/pkg/service"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 )
@@ -20,16 +21,21 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to connect to database")
 	}
 
-	rbConn, err := rabbitMQ.ConnectRabbitMQ()
+	rbConn, err := rabbitmq.ConnectRabbitMQ()
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to RabbitMQ")
 	}
 
-	rb := rabbitMQ.NewRabbitMQ(rbConn.Conn, rbConn.Ch, dbConn)
+	rb := rabbitmq.NewRabbitMQ(rbConn.Conn, rbConn.Ch, dbConn)
 
-	go rb.Consumer("product-url", utils.ExtractProduct)
+	svc := service.NewService(rb)
+	svc.StartConsumer()
 
-	h := api.NewHandler(log, &rbConn)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go svc.PeriodicCheck(ctx, "product-check")
+
+	h := api.NewHandler(log, rb)
 	h.RegisterRoutes(r)
 
 	if err := r.Run(":8000"); err != nil {
