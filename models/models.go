@@ -14,6 +14,7 @@ type SelectedProduct struct {
 	Name        string    `json:"name_"`
 	Price       string    `json:"price"`
 	URL         string    `json:"product_url"`
+	Status      string    `json:"status_"`
 	CreatedAt   time.Time `json:"created_at"`
 	LastChecked time.Time `json:"last_checked"`
 }
