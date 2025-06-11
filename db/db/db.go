@@ -90,3 +90,25 @@ func (c Conn) SaveProduct(product models.SelectedProduct) error {
 
 	return nil
 }
+
+// PendingProduct retrives all products that has the status = pending
+func (c Conn) PendingProduct() ([]models.SelectedProduct, error) {
+	query := "SELECT id, name, price,product_url FROM selectedProduct Where status = 'pending'"
+
+	rows, err := c.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var products []models.SelectedProduct
+	for rows.Next() {
+		var p models.SelectedProduct
+		if err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.URL); err != nil {
+			return nil, err
+		}
+		products = append(products, p)
+	}
+
+	return products, nil
+}
