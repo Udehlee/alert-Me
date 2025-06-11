@@ -1,27 +1,25 @@
-package rabbitMQ
+package rabbitmq
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/Udehlee/alert-Me/db/db"
-	"github.com/Udehlee/alert-Me/models"
 	"github.com/streadway/amqp"
 )
 
 type RabbitMQ struct {
 	Conn *amqp.Connection
 	Ch   *amqp.Channel
-	db   db.Conn
+	DB   db.Conn
 }
 
 func NewRabbitMQ(conn *amqp.Connection, ch *amqp.Channel, db db.Conn) *RabbitMQ {
 	return &RabbitMQ{
 		Conn: conn,
 		Ch:   ch,
-		db:   db,
+		DB:   db,
 	}
 }
 
@@ -80,8 +78,7 @@ func (r *RabbitMQ) PublishToQueue(queueName string, body []byte) error {
 }
 
 // Consumer listens and  processes incoming messages from queue
-// It scrapes product data from URLs and saves them to the database
-func (r *RabbitMQ) Consumer(queueName string, scraper func(string) (models.SelectedProduct, error)) {
+func (r *RabbitMQ) Consumer(queueName string, processMessage func([]byte) error) error {
 	msgs, err := r.Ch.Consume(
 		queueName,
 		"",
@@ -91,33 +88,21 @@ func (r *RabbitMQ) Consumer(queueName string, scraper func(string) (models.Selec
 		false,
 		nil,
 	)
+
 	if err != nil {
-		log.Fatalf("Failed to register consumer: %v", err)
+		return err
 	}
 
 	go func() {
 		for msg := range msgs {
-			var payload models.UrlRequest
-
-			if err := json.Unmarshal(msg.Body, &payload); err != nil {
-				log.Printf("Error parsing message: %v", err)
-				continue
-			}
-
-			product, err := scraper(payload.URL)
+			err := processMessage(msg.Body)
 			if err != nil {
-				log.Printf("Failed to scrape product url: %v", err)
-			}
-
-			if err := r.db.SaveProduct(product); err != nil {
-				log.Printf("Failed to save product to db: %v", err)
+				log.Printf("handler error: %v", err)
 				continue
 			}
-
-			log.Printf(" Scraped Product: %+v\n", product)
 		}
 	}()
 
-	log.Println("Consumer running...")
-	select {}
+	log.Println("Consumer started on queue:", queueName)
+	return nil
 }
