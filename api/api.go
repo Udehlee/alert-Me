@@ -2,31 +2,35 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/Udehlee/alert-Me/models"
-	"github.com/Udehlee/alert-Me/pkg/rabbitmq"
+	"github.com/Udehlee/alert-Me/pkg/service"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 )
 
 type Handler struct {
-	rabbit *rabbitmq.RabbitMQ
-	log    zerolog.Logger
+	service service.Service
+	log     zerolog.Logger
 }
 
-func NewHandler(log zerolog.Logger, rabbit *rabbitmq.RabbitMQ) *Handler {
+func NewHandler(log zerolog.Logger, svc service.Service) *Handler {
 	return &Handler{
-		rabbit: rabbit,
-		log:    log,
+		service: svc,
+		log:     log,
 	}
 }
 
 func (h *Handler) RegisterRoutes(r *gin.Engine) {
 	r.POST("/submit", h.SubmitProduct)
-	r.GET("/signup", h.Signup)
-	r.GET("/login", h.Login)
+	r.GET("/", h.Index)
 
+}
+
+func (h *Handler) Index(c *gin.Context) {
+	c.String(200, "Welcome Home, my gee")
 }
 
 // SubmitProduct handles product url request
@@ -34,7 +38,7 @@ func (h *Handler) SubmitProduct(c *gin.Context) {
 	var reqProduct models.UrlRequest
 
 	if err := c.ShouldBindJSON(&reqProduct); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to bind URL request"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to bind product_url request"})
 		return
 	}
 
@@ -44,19 +48,13 @@ func (h *Handler) SubmitProduct(c *gin.Context) {
 		return
 	}
 
-	err = h.rabbit.PublishToQueue("product_url_queue", body)
+	err = h.service.Rabbit.PublishToQueue("product_url_queue", body)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to publish URL to queue"})
+		log.Printf(" Failed to publish message to queue: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to queue the URL"})
 		return
 	}
 
+	log.Printf("Successfully published message for URL: %s", reqProduct.URL)
 	c.JSON(http.StatusOK, gin.H{"message": "URL received and processing started"})
-}
-
-func (h *Handler) Signup(c *gin.Context) {
-	c.JSON(http.StatusInternalServerError, gin.H{"error": "unimplemented"})
-}
-
-func (h *Handler) Login(c *gin.Context) {
-	c.JSON(http.StatusInternalServerError, gin.H{"error": "unimplemented"})
 }
