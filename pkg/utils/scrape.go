@@ -8,10 +8,11 @@ import (
 	"strings"
 
 	"github.com/Udehlee/alert-Me/models"
+
 	"github.com/gocolly/colly"
 )
 
-// it is assumed that you enter a selected product url, so
+// it is assumed that you enter a product url, so
 // scrapers maps domain names to their specific functions
 // and scrape the selected product’s name and price from its URL
 var (
@@ -67,8 +68,8 @@ var (
 
 // ExtractProduct gets a product's name and price from its URL
 // using the associated scraper based on its domain
-func ExtractProduct(Url string) (models.SelectedProduct, error) {
-	product := models.SelectedProduct{}
+func ExtractProduct(Url string) (models.Product, error) {
+	product := models.Product{}
 
 	u, err := url.Parse(Url)
 	if err != nil {
@@ -83,8 +84,12 @@ func ExtractProduct(Url string) (models.SelectedProduct, error) {
 				return product, err
 			}
 
+			p, err := ToFloatPrice(price)
+			if err != nil {
+				return product, err
+			}
 			product.Name = name
-			product.Price = price
+			product.Price = p
 
 			return product, nil
 		}
