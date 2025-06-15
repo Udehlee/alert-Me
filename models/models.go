@@ -2,17 +2,10 @@ package models
 
 import "time"
 
-type User struct {
-	ID        string    `json:"user_id"`
-	Email     string    `json:"email"`
-	Password  string    `json:"pass_word"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-type SelectedProduct struct {
+type Product struct {
 	ID          int       `json:"id"`
 	Name        string    `json:"name_"`
-	Price       string    `json:"price"`
+	Price       float64   `json:"price"`
 	URL         string    `json:"product_url"`
 	Status      string    `json:"status_"`
 	CreatedAt   time.Time `json:"created_at"`
