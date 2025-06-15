@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres
+    container_name: postgres
+    env_file: .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: 'rabbitmq:3-management'
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    depends_on:
+      - postgres
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api
+    env_file: .env
+    depends_on:
+      - postgres
+      - rabbitmq
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:
+  rabbitmq_data:
+    driver: local
+
+
+ 
