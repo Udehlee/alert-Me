@@ -5,14 +5,16 @@ import (
 	"os"
 
 	"github.com/Udehlee/alert-Me/api"
-	"github.com/Udehlee/alert-Me/db/db"
-	"github.com/Udehlee/alert-Me/pkg/rabbitmq"
+	"github.com/Udehlee/alert-Me/internals/db"
+	"github.com/Udehlee/alert-Me/internals/rabbitmq"
 	"github.com/Udehlee/alert-Me/pkg/service"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 )
 
 func main() {
+	gin.SetMode(gin.ReleaseMode)
+
 	r := gin.Default()
 	log := zerolog.New(os.Stderr).With().Timestamp().Caller().Logger()
 
@@ -25,17 +27,19 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to RabbitMQ")
 	}
+	defer rbConn.Close()
 
-	rb := rabbitmq.NewRabbitMQ(rbConn.Conn, rbConn.Ch, dbConn)
+	rb := rabbitmq.NewRabbitMQ(rbConn.Conn, rbConn.Ch)
 
-	svc := service.NewService(rb)
+	svc := service.NewService(dbConn, rb)
 	svc.StartConsumer()
+	svc.PriceCheck("product_check")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	go svc.PeriodicCheck(ctx, "product-check")
+	go svc.SendForRecheck(ctx, "product-check")
 
-	h := api.NewHandler(log, rb)
+	h := api.NewHandler(log, *svc)
 	h.RegisterRoutes(r)
 
 	if err := r.Run(":8000"); err != nil {
