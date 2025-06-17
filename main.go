@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/Udehlee/alert-Me/api"
-	"github.com/Udehlee/alert-Me/internals/db"
+	"github.com/Udehlee/alert-Me/internals/db/db"
 	"github.com/Udehlee/alert-Me/internals/rabbitmq"
 	"github.com/Udehlee/alert-Me/pkg/service"
 	"github.com/gin-gonic/gin"
@@ -37,7 +37,7 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	go svc.SendForRecheck(ctx, "product-check")
+	go svc.SendForRecheck(ctx, "product_check")
 
 	h := api.NewHandler(log, *svc)
 	h.RegisterRoutes(r)
