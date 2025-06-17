@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/Udehlee/alert-Me/internals/db"
+	"github.com/Udehlee/alert-Me/internals/db/db"
 	"github.com/Udehlee/alert-Me/internals/rabbitmq"
 	"github.com/Udehlee/alert-Me/models"
 	"github.com/Udehlee/alert-Me/pkg/utils"
@@ -51,7 +51,7 @@ func (s *Service) StartConsumer() error {
 		return fmt.Errorf("failed to start product URL consumer: %w", err)
 	}
 
-	log.Println("✅ Consumer started successfully")
+	log.Println("Consumer started successfully")
 	return nil
 }
 
@@ -76,11 +76,11 @@ func (s *Service) SendForRecheck(ctx context.Context, queueName string) {
 				if err != nil {
 					log.Printf(" Failed to send product for recheck: %v", err)
 				} else {
-					log.Printf("📦 Sent product %s for recheck", p.URL)
+					log.Printf("Sent product %s for recheck", p.URL)
 				}
 			}
 		case <-ctx.Done():
-			log.Println("⏹ Stopping recheck process...")
+			log.Println("Stopping recheck process")
 			return
 		}
 	}
