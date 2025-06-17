@@ -1,5 +1,5 @@
   CREATE TABLE Products (
-    id INT SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     name_ TEXT NOT NULL,
     price DOUBLE PRECISION NOT NULL,
     product_url TEXT NOT NULL,
