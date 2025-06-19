@@ -51,6 +51,8 @@ func InitConnectDB() (Conn, error) {
 		return db, err
 	}
 
+	log.Printf("Connecting to DB: %s", config.DbName)
+
 	dsn := fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s sslmode=disable",
 		config.Username, config.Password, config.Host, config.Port, config.DbName)
 
@@ -75,14 +77,17 @@ func runMigrations(db *sql.DB) error {
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
-		"file://./internals/db/migrations",
+		"file://internals/db/migrations",
 		"postgres", driver)
-
 	if err != nil {
 		return fmt.Errorf("could not create migrate instance: %w", err)
 	}
 
 	if err := m.Up(); err != nil {
+		if err == migrate.ErrNoChange {
+			log.Println("No new migrations to apply.")
+			return nil
+		}
 		return fmt.Errorf("could not run up migrations: %w", err)
 	}
 
