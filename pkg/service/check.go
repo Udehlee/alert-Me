@@ -30,6 +30,7 @@ func NewService(db db.Conn, rabbit *rabbitmq.RabbitMQ) *Service {
 func (s *Service) StartConsumer() error {
 	log.Println("Starting consumer for queue")
 	HandleMsg := func(body []byte) error {
+
 		var payload models.UrlRequest
 		if err := utils.UnmarshalJSON(body, &payload); err != nil {
 			return fmt.Errorf("failed to parse incoming  product_url request: %w", err)
@@ -47,7 +48,7 @@ func (s *Service) StartConsumer() error {
 		return nil
 	}
 
-	if err := s.Rabbit.Consumer("product_url_queue", HandleMsg); err != nil {
+	if err := s.Rabbit.Consumer("product_babe_queue", HandleMsg); err != nil {
 		return fmt.Errorf("failed to start product URL consumer: %w", err)
 	}
 
@@ -58,7 +59,7 @@ func (s *Service) StartConsumer() error {
 // SendForRecheck periodically fetches pending products from database
 // and republishes them to a queue for processing.
 func (s *Service) SendForRecheck(ctx context.Context, queueName string) {
-	ticker := time.NewTicker(500 * time.Millisecond)
+	ticker := time.NewTicker(3 * time.Minute)
 	defer ticker.Stop()
 
 	for {
