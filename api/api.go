@@ -50,7 +50,7 @@ func (h *Handler) SubmitProduct(c *gin.Context) {
 
 	err = h.service.Rabbit.PublishToQueue("product_url_queue", body)
 	if err != nil {
-		log.Printf(" Failed to publish message to queue: %v", err)
+		// log.Printf(" Failed to publish message to queue: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to queue the URL"})
 		return
 	}
