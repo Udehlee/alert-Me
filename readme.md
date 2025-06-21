@@ -1,8 +1,8 @@
 ## alert-Me
-Alert Me is a price drop alert system tracks submitted E-commerce products and notify users when there is a reduction in the price.
+Alert Me is a price drop alert system that tracks submitted E-commerce products and notify users when there is a reduction in the price.
 
 ### How it works
-A user submits a product URL (Jumia or konga), which is then published to a RabbitMQ queue. A consumer service called PriceCheck picks up the URL, scrapes the product's name and price, and stores the details in the database. Periodically, another service called SendForRecheck retrieves the saved product data, scrapes the current price again, and compares it with the database stored value. If a yhere is price drop, the system triggers a notification, which is published to the price_drop_alert queue.
+A user submits a product URL which is then published to a RabbitMQ queue. A consumer service called PriceCheck picks up the URL, scrapes the product's name and price, and stores the details in the database. Periodically, another service called SendForRecheck retrieves the saved product data, scrapes the current price again, and compares it with the database stored value. If a there is price drop, the system triggers a notification, which is published to the price_drop_alert queue.
 
 ### Technologies Used
 
@@ -29,28 +29,29 @@ go mod tidy
 - Create .env file and fill it with your credentials as shown in the .env.example
 - In the  .env.example
 ```sh
+ DOMAIN
  NAME_SELECTOR
-PRICE_SELECTOR
+ PRICE_SELECTOR
 ```
-should either be jumia or Konga for now.
+ensure the above carries the particular product you want to watch and recieve alert notification for.
 
 - Start the application with
  ```sh
  docker-compose up --build
 ```
 The sever is listening on http://localhost:8000
-the rabbitMQ will be listening http://localhost:15672, login as
+
+The rabbitMQ will be listening http://localhost:15672, login as
  ```sh
 name: guest
 password: guest
 ```
 
- starting the application will apply  the following migration files in the internals/db/migrations folder and create:
+ Starting the application will apply  the following migration files in the internals/db/migrations folder and create:
 
 - a products table that will hold all the details of the scraped product_url
 
 ### Api Endpoints
-
 
 ```sh
 POST /submit
