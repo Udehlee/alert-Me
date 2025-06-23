@@ -2,7 +2,12 @@
 Alert Me is a price drop alert system that tracks submitted E-commerce products and notify users when there is a reduction in the price.
 
 ### How it works
-A user submits a product URL which is then published to a RabbitMQ queue. A consumer service called PriceCheck picks up the URL, scrapes the product's name and price, and stores the details in the database. Periodically, another service called SendForRecheck retrieves the saved product data, scrapes the current price again, and compares it with the database stored value. If a there is price drop, the system triggers a notification, which is published to the price_drop_alert queue.
+The user submits a product URL, which is sent to a RabbitMQ queue. The system picks up this URL and processes it using the following services:
+
+- **PriceCheck** which  scrapes the product’s name and current price from the submitted URL, then saves the details to the database
+
+- **SendForRecheck** runs at intervals. It checks the saved products, scrapes the latest prices, and compares them with the stored ones. If the price has dropped, a notification is sent to the price_drop_alert queue and details are printed in the terminal
+
 
 ### Technologies Used
 
