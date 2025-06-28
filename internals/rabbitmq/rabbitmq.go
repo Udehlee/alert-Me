@@ -21,37 +21,27 @@ func NewRabbitMQ(conn *amqp.Connection, ch *amqp.Channel) *RabbitMQ {
 }
 
 // ConnectRabbitMQ initializes the rabbitmq connection and channel
-func ConnectRabbitMQ() (RabbitMQ, error) {
+func ConnectRabbitMQ() (*RabbitMQ, error) {
 	rb := RabbitMQ{}
 
 	conn, err := amqp.Dial(os.Getenv("RABBITMQ_URL"))
 	if err != nil {
-		return rb, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
+		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
 	}
 
 	ch, err := conn.Channel()
 	if err != nil {
-		return rb, fmt.Errorf("failed to create channel: %w", err)
+		return nil, fmt.Errorf("failed to create channel: %w", err)
 	}
 
 	rb.Conn = conn
 	rb.Ch = ch
 
 	fmt.Println("RabbitMQ connected sucessfully")
-	return rb, nil
+	return &rb, nil
 }
 
-// Close safely closes the RabbitMQ channel and connection
-func (r *RabbitMQ) Close() {
-	if r.Ch != nil {
-		r.Ch.Close()
-	}
-	if r.Conn != nil {
-		r.Conn.Close()
-	}
-}
-
-// PublishToQueue sends queueName and product_url to rabbitQueue
+// PublishToQueue sends queueName and product_url to Queue
 func (r *RabbitMQ) PublishToQueue(queueName string, body []byte) error {
 	_, err := r.Ch.QueueDeclare(
 		queueName,
@@ -78,7 +68,6 @@ func (r *RabbitMQ) PublishToQueue(queueName string, body []byte) error {
 	)
 
 	if err != nil {
-		log.Printf("Failed to publish to queue %q: %v", queueName, err)
 		return fmt.Errorf("failed to publish message: %v", err)
 	}
 
@@ -87,7 +76,7 @@ func (r *RabbitMQ) PublishToQueue(queueName string, body []byte) error {
 }
 
 // Consumer listens and  processes incoming messages from queue
-func (r *RabbitMQ) Consumer(queueName string, msgHandler func([]byte) error) error {
+func (r *RabbitMQ) Consumer(queueName string, handleMsg func([]byte) error) error {
 	_, err := r.Ch.QueueDeclare(
 		queueName,
 		true,
@@ -98,11 +87,7 @@ func (r *RabbitMQ) Consumer(queueName string, msgHandler func([]byte) error) err
 	)
 
 	if err != nil {
-		return fmt.Errorf("failed to declare queue: %w", err)
-	}
-
-	if err := r.Ch.Qos(5, 0, false); err != nil {
-		return fmt.Errorf("failed to set QoS: %w", err)
+		return fmt.Errorf("failed to declare queue %s: %w", queueName, err)
 	}
 
 	msgs, err := r.Ch.Consume(
@@ -121,12 +106,9 @@ func (r *RabbitMQ) Consumer(queueName string, msgHandler func([]byte) error) err
 
 	go func() {
 		for msg := range msgs {
-			log.Printf("Received message: %s", msg.Body)
-
-			err := msgHandler(msg.Body)
+			err := handleMsg(msg.Body)
 			if err != nil {
 				log.Printf("Failed to process message: %v", err)
-				msg.Nack(false, false)
 				continue
 			}
 
@@ -136,5 +118,5 @@ func (r *RabbitMQ) Consumer(queueName string, msgHandler func([]byte) error) err
 		}
 	}()
 
-	select {}
+	return nil
 }
