@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/Udehlee/alert-Me/internals/db/db"
+	db "github.com/Udehlee/alert-Me/internals/db/conn"
 	"github.com/Udehlee/alert-Me/internals/rabbitmq"
 	"github.com/Udehlee/alert-Me/models"
 	"github.com/Udehlee/alert-Me/pkg/utils"
@@ -26,14 +26,12 @@ func NewService(db db.Conn, rabbit *rabbitmq.RabbitMQ) *Service {
 }
 
 // StartConsumer starts a consumer that listens to a queue
-// and saves scraped product name and price from submitted URLs database.
+// and saves scraped product name and price from submitted URLs
 func (s *Service) StartConsumer() error {
-	log.Println("Starting consumer for queue")
-	HandleMsg := func(body []byte) error {
-
+	msg := func(body []byte) error {
 		var payload models.UrlRequest
 		if err := utils.UnmarshalJSON(body, &payload); err != nil {
-			return fmt.Errorf("failed to parse incoming  product_url request: %w", err)
+			return fmt.Errorf("failed to unmarshal incoming  product_url request: %w", err)
 		}
 
 		product, err := utils.ExtractProduct(payload.URL)
@@ -48,7 +46,7 @@ func (s *Service) StartConsumer() error {
 		return nil
 	}
 
-	if err := s.Rabbit.Consumer("product_babe_queue", HandleMsg); err != nil {
+	if err := s.Rabbit.Consumer("product_url_queue", msg); err != nil {
 		return fmt.Errorf("failed to start product URL consumer: %w", err)
 	}
 
@@ -57,23 +55,34 @@ func (s *Service) StartConsumer() error {
 }
 
 // SendForRecheck periodically fetches pending products from database
-// and republishes them to a queue for processing.
+// and republishes them to a queue
 func (s *Service) SendForRecheck(ctx context.Context, queueName string) {
-	ticker := time.NewTicker(3 * time.Minute)
+	ticker := time.NewTicker(20 * time.Second)
 	defer ticker.Stop()
 
+	log.Println("starting fetching pending product:")
 	for {
 		select {
 		case <-ticker.C:
 			products, err := s.Db.PendingProduct()
 			if err != nil {
-				log.Printf(" Error fetching pending product: %v", err)
+				log.Printf("Error fetching pending product: %v", err)
+				continue
+			}
+
+			if len(products) == 0 {
+				log.Println("currently, there is no product to watch for now")
 				continue
 			}
 
 			for _, p := range products {
-				body, _ := json.Marshal(p.URL)
-				err := s.Rabbit.PublishToQueue(queueName, body)
+				body, err := json.Marshal(p)
+				if err != nil {
+					log.Printf("Failed to marshal URL %s: %v", p.URL, err)
+					continue
+				}
+
+				err = s.Rabbit.PublishToQueue(queueName, body)
 				if err != nil {
 					log.Printf(" Failed to send product for recheck: %v", err)
 				} else {
