@@ -45,7 +45,7 @@ services:
       - "postgres:5432"
       - "--"
       - "/app/start.sh"
-    command: ["/app/main"]  
+    command: ["/app/main"]
 
 volumes:
   pgdata:
