@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -14,7 +15,10 @@ func UnmarshalJSON(data []byte, destination interface{}) error {
 	return nil
 }
 
-func ToFloatPrice(price string) (float64, error) {
+// ToFloat converts a price string to float64
+func ToFloat(price string) (float64, error) {
 	p := strings.TrimSpace(price)
-	return strconv.ParseFloat(p, 64)
+	re := regexp.MustCompile(`[^\d.]`)
+	r := re.ReplaceAllString(p, "")
+	return strconv.ParseFloat(r, 64)
 }
