@@ -5,5 +5,5 @@ CREATE TABLE products (
   product_url TEXT NOT NULL,
   status_ TEXT DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT NOW(),
-  last_checked TIMESTAMP
+  last_checked TIMESTAMP DEFAULT NOW()
 );
