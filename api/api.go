@@ -24,13 +24,12 @@ func NewHandler(log zerolog.Logger, svc service.Service) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(r *gin.Engine) {
-	r.POST("/submit", h.SubmitProduct)
+	r.POST("/api/submit", h.SubmitProduct)
 	r.GET("/", h.Index)
-
 }
 
 func (h *Handler) Index(c *gin.Context) {
-	c.String(200, "Welcome Home, my gee")
+	c.String(200, "Welcome Home, my guy")
 }
 
 // SubmitProduct handles product url request
@@ -50,11 +49,12 @@ func (h *Handler) SubmitProduct(c *gin.Context) {
 
 	err = h.service.Rabbit.PublishToQueue("product_url_queue", body)
 	if err != nil {
-		// log.Printf(" Failed to publish message to queue: %v", err)
+		log.Printf(" Failed to publish message to queue: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to queue the URL"})
 		return
 	}
 
-	log.Printf("Successfully published message for URL: %s", reqProduct.URL)
-	c.JSON(http.StatusOK, gin.H{"message": "URL received and processing started"})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "product received and its currently processing",
+	})
 }
