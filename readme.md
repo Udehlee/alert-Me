@@ -1,5 +1,5 @@
 ## alert-Me
-Alert Me is a price drop alert system that tracks submitted E-commerce products and notify users when there is a reduction in the price. It relies on RabbitMQ for message exchange.
+Alert Me is a price drop alert system that tracks submitted E-commerce products and notify users when there is a reduction in the price. It uses RabbitMQ for message exchange.
 
 ### How it works
 
@@ -61,7 +61,7 @@ password: guest
 
 - a products table that will hold all the details of the scraped product_url
 
-### Api Endpoints
+### Api Endpoint
 
 ```sh
 POST /api/submit
